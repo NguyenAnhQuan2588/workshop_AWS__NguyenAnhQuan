@@ -22,7 +22,7 @@ chapter: false
 
 &emsp; **Công ty thực tập:** Công ty TNHH Amazon Web Services Vietnam
 
-&emsp; **Vị trí thực tập:** tester Cloud Intern
+&emsp; **Vị trí thực tập:** Tester Intern
 
 &emsp; **Thời gian thực tập:** Từ ngày 04/05/2026 đến ngày 25/7/2026
 
