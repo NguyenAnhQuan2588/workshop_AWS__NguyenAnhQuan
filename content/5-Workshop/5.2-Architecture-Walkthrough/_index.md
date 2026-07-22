@@ -16,15 +16,15 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Access the website: browse the catalogue, view product detail pages, cart, checkout, etc.
-- Log in / register an account.
-- Generate **clickstream events** such as:
+- Visits the website: browses the product catalogue, views product detail pages, manages the cart, completes checkout, etc.
+- Creates or signs into an account.
+- Triggers **clickstream events** such as:
   - `page_view`, `product_view`, `add_to_cart`, `purchase`, …
 
 **Role in the pipeline**
 
-- Is the **source of all behaviors** that the analytics system analyzes.
-- JavaScript on the frontend will collect these events and send them to the backend through the API (6).
+- Is the **originating source of all behavioral signals** that the analytics system processes.
+- The JavaScript layer embedded in the frontend gathers these events and dispatches them to the backend through the API (6).
 
 ---
 
@@ -32,18 +32,18 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Acts as the **CDN layer** that delivers website content:
-  - Caches HTML/CSS/JS/images to reduce latency.
-  - Offloads traffic from the origin (Amplify, S3 assets).
-- Can serve as a **single entry point** for web traffic:
-  - Route/forward requests:
+- Operates as the **CDN layer** responsible for delivering website content:
+  - Caches HTML/CSS/JS/images to cut down on latency.
+  - Offloads traffic pressure from the origin (Amplify, S3 assets).
+- Acts as a **unified entry point** for all web traffic:
+  - Routes and forwards requests to the appropriate origin:
     - Dynamic web content → Amplify.
     - Static images/media → S3 (3).
 
-**Why it is important**
+**Why it matters**
 
-- An e-commerce website needs **good page load speed**.  
-- CloudFront helps improve user experience across different geographic regions.
+- An e-commerce site demands **fast page load times**.  
+- CloudFront improves the user experience across geographic regions by serving content from edge locations.
 
 ---
 
@@ -51,14 +51,14 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Store **product images** and other **static assets** for the website.
-- Act as the **origin** when CloudFront (2) serves images/assets.
+- Stores **product images** and other **static website assets**.
+- Functions as the **origin** from which CloudFront (2) serves images and other static files.
 
 **Notes**
 
-- This bucket (for example, `clickstream-s3-sbw`) is **separate** from the RAW clickstream bucket (8) in order to:
-  - Clearly separate permissions.
-  - Make management and cleanup easier.
+- This bucket (e.g., `clickstream-s3-sbw`) is kept **separate** from the RAW clickstream bucket (8) in order to:
+  - Maintain clear permission boundaries.
+  - Simplify management and eventual cleanup.
 
 ---
 
@@ -66,15 +66,15 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Build & deploy the **Next.js** application (for example, `ClickSteam.NextJS`).
-- Host the frontend (SSR/ISR, API routes).
-- Manage the deployment pipeline: build, artifact, domain mapping.
+- Builds and deploys the **Next.js** application (e.g., `ClickSteam.NextJS`).
+- Hosts the frontend (SSR/ISR, API routes).
+- Manages the full deployment pipeline: build, artifact storage, and domain mapping.
 
 **Integration with other services**
 
-- Connects to **Cognito (5)** for handling authentication.
-- Sends **clickstream events** from the frontend to **API Gateway (6)**.
-- Connects to **EC2 OLTP (20)** via Prisma to read/write transactional data.
+- Connects to **Cognito (5)** to handle user authentication flows.
+- Pushes **clickstream events** from the frontend to **API Gateway (6)**.
+- Talks to **EC2 OLTP (20)** via Prisma to read and write transactional data.
 
 ---
 
@@ -82,17 +82,17 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Manage **user identity**:
-  - Sign up / sign in / reset password.
-  - Store the user pool and issue JWT tokens (ID token, access token).
-- Issue tokens for the frontend so that it can call backend APIs with the correct permissions.
+- Manages **user identity**:
+  - Sign up / sign in / password reset flows.
+  - Maintains the user pool and issues JWT tokens (ID token, access token).
+- Provides the frontend with tokens it can use to call backend APIs with the correct permissions.
 
 **Role in clickstream**
 
-- Allows determining:
+- Enables the system to determine:
   - `user_login_state` (logged-in / guest).
   - `identity_source` (Cognito, social login, etc.).
-- This information is attached to events and stored in S3/DWH to analyze user behavior.
+- This context is embedded in events and stored in S3/DWH to support user behavior analysis.
 
 ---
 
@@ -102,16 +102,16 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Provide a public HTTP endpoint for the frontend:
+- Exposes a public HTTP endpoint for the frontend:
   - `POST /clickstream`.
-- Perform basic validation:
-  - Method/path, throttling.
-  - Optional: integrate a Cognito authorizer.
+- Applies basic request validation:
+  - HTTP method/path checking, throttling.
+  - Optional: Cognito authorizer integration.
 
 **Processing flow**
 
-- Receive JSON requests from the browser.
-- Forward the payload to **Lambda Clickstream Ingest (7)**.
+- Receives JSON payloads from the browser.
+- Forwards each payload to **Lambda Clickstream Ingest (7)**.
 
 ---
 
@@ -119,18 +119,18 @@ pre: " <b> 5.2. </b> "
 
 **Main responsibilities**
 
-- Receive events from API Gateway (6).
-- Act as the **ingestion layer**:
+- Receives events forwarded by API Gateway (6).
+- Serves as the **ingestion layer**:
 
-  - Validate schema / event type.
-  - Perform minimal enrichment:
-    - Generate `event_id`.
-    - Normalize `event_timestamp`.
-    - Attach `client_id`, `session_id`, `user_login_state`, `identity_source` if needed.
+  - Validates the schema and event type.
+  - Performs lightweight enrichment:
+    - Generates a unique `event_id`.
+    - Normalizes the `event_timestamp`.
+    - Attaches `client_id`, `session_id`, `user_login_state`, `identity_source` as needed.
 
-- Write raw events (`raw JSON`) to the **S3 Clickstream Raw bucket (8)** using time-based prefixes/partitions.
+- Writes raw events (`raw JSON`) to the **S3 Clickstream Raw bucket (8)** using time-based prefixes.
 
-- Write logs to **CloudWatch (17)** for debugging.
+- Outputs logs to **CloudWatch (17)** for observability and debugging.
 
 ---
 
@@ -138,17 +138,17 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Store all **raw clickstream data** written by Lambda Ingest (7).
-- Act as a **“mini data lake”** for batch ETL:
+- Stores all **raw clickstream data** deposited by Lambda Ingest (7).
+- Acts as a **"mini data lake"** for downstream batch ETL:
 
-  - Data is organized by **time-based folders/prefixes**:
+  - Data is organized into **time-based folder prefixes**:
     - `events/YYYY/MM/DD/`.
-  - ETL (11) reads the data in batches (hourly, daily, etc.).
+  - ETL (11) reads data in batches (hourly, daily, etc.).
 
 **Architectural role**
 
-- Serves as the **source of truth** for clickstream data:
-  - You can reprocess or rebuild the Data Warehouse if needed.
+- Serves as the **source of truth** for all clickstream data:
+  - The Data Warehouse can be rebuilt or reprocessed from this bucket at any time.
 
 ---
 
@@ -156,16 +156,16 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Run batch schedules, for example: `rate(1 hour)`.
-- On each schedule:
-  - Trigger **Lambda ETL (11)**.
+- Executes batch schedules, for example: `rate(1 hour)`.
+- On each scheduled trigger:
+  - Invokes **Lambda ETL (11)**.
 
-**Why separating it out**
+**Why it is isolated**
 
-- The ETL “clock” lives in EventBridge:
-  - Easy to adjust frequency (1h, 30’, 5’, etc.).
-  - Easy to disable/enable.
-  - Separates “when to run” from the ETL logic itself.
+- The ETL "clock" lives entirely in EventBridge:
+  - Cadence is easy to adjust (1h, 30m, 5m, etc.).
+  - Can be disabled or re-enabled without touching the Lambda code.
+  - Cleanly separates "when to run" from the ETL business logic.
 
 ---
 
@@ -175,27 +175,27 @@ pre: " <b> 5.2. </b> "
 
 **Amazon VPC**
 
-- Isolate the network and control routing / security for the entire platform.
+- Provides network isolation and controls routing and security for the entire platform.
 
 **Public subnet – OLTP**
 
-- Contains **EC2 OLTP (20)**.
-- Has a route `0.0.0.0/0 → Internet Gateway`.
+- Houses **EC2 OLTP (20)**.
+- Has a default route: `0.0.0.0/0 → Internet Gateway`.
 - Allows:
-  - Amplify/Internet to access PostgreSQL OLTP based on security groups.
+  - Amplify and internet traffic to reach PostgreSQL OLTP, governed by security groups.
 
 **Private subnet – Analytics**
 
-- Contains:
+- Houses:
   - **EC2 Shiny + DWH (12)**.
   - **Lambda ETL (11)**.
-- Has no public IP.
-- Can only go out through **VPC Endpoints (10, 15)**.
+- No public IP is assigned.
+- Egress is only possible through **VPC Endpoints (10, 15)**.
 
 **Internet Gateway**
 
-- Provides Internet access for resources in the public subnet.
-- The private subnet does not route to the IGW (unless you configure it differently).
+- Provides internet connectivity for resources in the public subnet.
+- The private subnet has no route to the IGW (unless explicitly configured otherwise).
 
 ---
 
@@ -203,14 +203,14 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Allow resources inside the VPC (Lambda ETL, private EC2) to access S3 (8) **without needing NAT/Internet**.
-- Traffic to S3 goes over the **AWS private network**, which is more secure and cheaper than a NAT Gateway.
+- Allows VPC-resident resources (Lambda ETL, private EC2) to access S3 (8) **without routing through NAT or the public Internet**.
+- Traffic to S3 stays within the **AWS private backbone network**, which is more secure and cost-effective than a NAT Gateway.
 
 **Role**
 
-- A key piece to:
-  - Keep the decision of “**no NAT Gateway**”.
-  - Still allow ETL / DW to read and write S3.
+- A foundational piece that enables:
+  - Maintaining the "**no NAT Gateway**" design decision.
+  - Allowing ETL and DW components to read from and write to S3.
 
 ---
 
@@ -219,15 +219,15 @@ pre: " <b> 5.2. </b> "
 **Responsibilities**
 
 - Triggered by **EventBridge (9)** on a schedule.
-- Runs inside the **private subnet** of the VPC.
-- Performs batch ETL:
+- Executes inside the **private subnet** of the VPC.
+- Runs batch ETL operations:
 
-  - Read raw events from **S3 (8)** via the Gateway Endpoint (10).
-  - Transform / clean / flatten data according to the Data Warehouse schema (for example, the 15 fields you finalized).
-  - Load into **PostgreSQL DWH on private EC2 (12)**:
-    - Insert / upsert, possibly partitioned by day/hour.
+  - Reads raw events from **S3 (8)** via the Gateway Endpoint (10).
+  - Transforms, cleans, and flattens data to match the Data Warehouse schema (e.g., the 15 confirmed fields).
+  - Loads the result into **PostgreSQL DWH on private EC2 (12)**:
+    - Insert / upsert, optionally partitioned by day or hour.
 
-- Write logs and metrics to **CloudWatch (17)**; on errors it can send notifications via **SNS (18)**.
+- Writes logs and metrics to **CloudWatch (17)**; on errors, it can fire notifications via **SNS (18)**.
 
 ---
 
@@ -235,16 +235,16 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Server for **Data Warehouse (PostgreSQL)** + **Shiny Server**.
-- Receive cleaned data from Lambda ETL (11) and store it in DWH tables.
-- Provide data to Shiny dashboards:
-  - Shiny queries the local/private Postgres instance.
+- Hosts the **Data Warehouse (PostgreSQL)** and the **Shiny Server**.
+- Accepts clean, transformed data from Lambda ETL (11) and persists it in DWH tables.
+- Supplies data to Shiny analytics dashboards:
+  - Shiny runs queries against the local private Postgres instance.
 
 **Characteristics**
 
-- Runs in a **private subnet**.
-- Has no public IP.
-- Administration access is via **SSM Session Manager (14 + 15)**.
+- Runs inside a **private subnet**.
+- Has no public IP address.
+- Administrative access is managed through **SSM Session Manager (14 + 15)**.
 
 ---
 
@@ -252,21 +252,21 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Host analytics dashboards:
+- Hosts analytics dashboards covering:
 
-  - Overall KPIs.
-  - Conversion funnel.
-  - Top products.
-  - User behavior, session analysis, etc.
+  - Top-level KPIs.
+  - Conversion funnel visualization.
+  - Product performance rankings.
+  - User behavior and session analysis.
 
-- Connect directly to **PostgreSQL DWH** on the same EC2 instance.
+- Queries **PostgreSQL DWH** running on the same EC2 instance.
 
 **Access**
 
 - Listens on port `3838`.
-- Typically accessed via:
+- Typically accessed through:
 
-  - Internal VPN, or
+  - An internal VPN, or
   - **SSM port forwarding** (14).
 
 ---
@@ -275,18 +275,18 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Allow admins to access private EC2 instances **without SSH, without public IPs**.
-- Support:
+- Grants admins access to private EC2 instances **without SSH and without public IP addresses**.
+- Supports:
 
-  - Opening a terminal into EC2 (run command).
-  - **Port forwarding** (for example, forward `localhost:3838` → Shiny on EC2).
-  - Better auditing of access sessions.
+  - Opening an interactive terminal session on EC2 (run command).
+  - **Port forwarding** (e.g., forward `localhost:3838` → Shiny running on EC2).
+  - Improved session audit logging.
 
 **Example**
 
-- You can access Shiny from your local machine at:  
+- You can reach Shiny from your local machine at:  
   `http://localhost:3838/sbw_dashboard`  
-  after successfully configuring the session port forwarding.
+  once the SSM port forwarding session is established.
 
 ---
 
@@ -294,14 +294,14 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Create **private** connections from EC2/Lambda in the VPC to SSM/Session Manager services:
+- Establishes **private** connectivity between EC2/Lambda inside the VPC and the SSM/Session Manager service endpoints:
 
   - `ssm`, `ssmmessages`, `ec2messages`, …
 
-- Ensure that:
+- Ensures that:
 
   - Private EC2 instances can still use SSM.
-  - Traffic does not have to go through the Internet/NAT.
+  - Traffic never traverses the internet or a NAT gateway.
 
 ---
 
@@ -311,17 +311,17 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Manage **roles/policies** for the whole system:
+- Governs **roles and policies** across the entire system:
 
-  - Permissions for API Gateway, Lambda.
-  - Lambda Ingest writes to S3 (8).
-  - Lambda ETL reads S3 (8) + connects to DB (12).
-  - EC2 role for SSM + CloudWatch agent (if any).
+  - Permissions for API Gateway and Lambda.
+  - Lambda Ingest: permission to write to S3 (8).
+  - Lambda ETL: permission to read S3 (8) and connect to the DB (12).
+  - EC2 instance role for SSM and CloudWatch agent (if deployed).
 
 **Principles**
 
-- **Least privilege**.
-- Clearly separate permissions by function and by service.
+- **Least privilege** at all times.
+- Permissions are clearly scoped by function and by service.
 
 ---
 
@@ -329,18 +329,18 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Collect **logs & metrics** from:
+- Collects **logs and metrics** from:
 
   - Lambda Ingest (7).
   - Lambda ETL (11).
   - EventBridge rule (9).
-  - EC2 if the agent is installed.
+  - EC2, if the CloudWatch agent is installed.
 
-- Define **alarms**: ETL failures, ingest failures, number of retries, duration, etc.
+- Defines **alarms** for: ETL failures, ingest errors, retry counts, execution duration, etc.
 
 **Role**
 
-- The **main place for debugging** when the pipeline has problems.
+- The **primary observability hub** for diagnosing pipeline problems.
 
 ---
 
@@ -348,13 +348,13 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Acts as the **notification channel** when there are incidents:
+- Acts as the **notification channel** for operational incidents:
 
-  - ETL failure.
-  - Ingest failure.
-  - CloudWatch alarm triggered.
+  - ETL job failure.
+  - Ingest function failure.
+  - CloudWatch alarm activation.
 
-- Send email / SMS / webhook depending on configuration.
+- Delivers notifications via email / SMS / webhook based on subscription configuration.
 
 ---
 
@@ -362,15 +362,15 @@ pre: " <b> 5.2. </b> "
 
 **Responsibilities**
 
-- Run **PostgreSQL OLTP** for the e-commerce web system:
+- Runs **PostgreSQL OLTP** to serve the e-commerce web application:
 
   - Order transactions.
-  - Product information, inventory.
-  - User information.
+  - Product catalog and inventory data.
+  - User account information.
 
 **Relation to DWH**
 
-- **Separated** from the Data Warehouse (12):
+- **Kept separate** from the Data Warehouse (12):
 
-  - OLTP is optimized for **transactions**.
-  - DWH is optimized for **analytics and batch loads**.
+  - OLTP is optimized for **transactional read/write operations**.
+  - DWH is optimized for **analytics queries and batch data loads**.

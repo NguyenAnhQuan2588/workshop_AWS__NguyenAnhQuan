@@ -16,15 +16,15 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Truy cập website: duyệt catalogue, xem trang chi tiết sản phẩm, giỏ hàng, checkout…
-- Đăng nhập / đăng ký tài khoản.
+- Truy cập website: duyệt catalogue, xem trang chi tiết sản phẩm, quản lý giỏ hàng, hoàn tất thanh toán, v.v.
+- Tạo tài khoản hoặc đăng nhập vào hệ thống.
 - Phát sinh **clickstream events** như:
   - `page_view`, `product_view`, `add_to_cart`, `purchase`, …
 
 **Vai trò trong pipeline**
 
-- Là **nguồn gốc mọi hành vi** mà hệ thống analytics phân tích.
-- JavaScript ở frontend sẽ gom các event này và gửi về backend thông qua API (6).
+- Là **nguồn phát sinh mọi tín hiệu hành vi** mà hệ thống analytics xử lý.
+- Lớp JavaScript nhúng trong frontend gom các events này và chuyển chúng về backend thông qua API (6).
 
 ---
 
@@ -32,18 +32,18 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Là lớp **CDN** phân phối nội dung cho website:
-  - Cache HTML/CSS/JS/images để giảm latency.
-  - Giảm tải cho origin (Amplify, S3 assets).
-- Có thể làm **điểm vào chung** cho traffic web:
-  - Route/forward request:
+- Hoạt động như **lớp CDN** đảm nhận phân phối nội dung website:
+  - Cache HTML/CSS/JS/ảnh để giảm latency.
+  - Giảm tải áp lực từ origin (Amplify, S3 assets).
+- Đóng vai trò **điểm vào thống nhất** cho toàn bộ traffic web:
+  - Định tuyến và chuyển tiếp request đến đúng origin:
     - Nội dung web động → Amplify.
     - Ảnh / media tĩnh → S3 (3).
 
 **Tại sao quan trọng**
 
-- Website thương mại điện tử cần **tốc độ tải trang** tốt.  
-- CloudFront giúp cải thiện trải nghiệm người dùng ở nhiều khu vực địa lý.
+- Website thương mại điện tử đòi hỏi **tốc độ tải trang cao**.
+- CloudFront cải thiện trải nghiệm người dùng ở nhiều vùng địa lý bằng cách phục vụ nội dung từ các edge location gần nhất.
 
 ---
 
@@ -51,14 +51,14 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Lưu **ảnh sản phẩm** và các **assets tĩnh** khác của website.
-- Đóng vai trò **origin** khi CloudFront (2) phục vụ ảnh/asset.
+- Lưu trữ **ảnh sản phẩm** và các **assets tĩnh** khác của website.
+- Đóng vai trò **origin** mà CloudFront (2) lấy ảnh và file tĩnh để phục vụ.
 
 **Lưu ý**
 
-- Bucket này (ví dụ `clickstream-s3-sbw`) **tách biệt** khỏi RAW clickstream bucket (8) để:
-  - Phân quyền rõ ràng.
-  - Dễ quản trị, dễ dọn dẹp.
+- Bucket này (ví dụ `clickstream-s3-sbw`) được **tách biệt** khỏi RAW clickstream bucket (8) nhằm:
+  - Duy trì ranh giới phân quyền rõ ràng.
+  - Đơn giản hóa việc quản lý và dọn dẹp tài nguyên.
 
 ---
 
@@ -66,15 +66,15 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Build & deploy ứng dụng **Next.js** (ví dụ `ClickSteam.NextJS`).
+- Build và deploy ứng dụng **Next.js** (ví dụ `ClickSteam.NextJS`).
 - Host frontend (SSR/ISR, API routes).
-- Quản lý pipeline deploy: build, artifact, domain mapping.
+- Quản lý toàn bộ pipeline deploy: build, lưu artifact và ánh xạ domain.
 
 **Liên kết với dịch vụ khác**
 
-- Kết nối với **Cognito (5)** để xử lý đăng nhập.
-- Gửi **clickstream events** từ frontend tới **API Gateway (6)**.
-- Kết nối tới **EC2 OLTP (20)** qua Prisma để đọc/ghi dữ liệu giao dịch.
+- Kết nối với **Cognito (5)** để xử lý luồng xác thực người dùng.
+- Đẩy **clickstream events** từ frontend tới **API Gateway (6)**.
+- Giao tiếp với **EC2 OLTP (20)** qua Prisma để đọc ghi dữ liệu giao dịch.
 
 ---
 
@@ -83,16 +83,16 @@ pre: " <b> 5.2. </b> "
 **Nhiệm vụ**
 
 - Quản lý **user identity**:
-  - Đăng ký / đăng nhập / reset password.
-  - Lưu user pool, cấp token JWT (ID token, access token).
-- Cấp token cho frontend để gọi các API backend theo đúng quyền.
+  - Luồng đăng ký / đăng nhập / đặt lại mật khẩu.
+  - Duy trì user pool và cấp phát JWT tokens (ID token, access token).
+- Cung cấp token cho frontend để gọi các API backend với đúng quyền hạn.
 
 **Vai trò trong clickstream**
 
-- Cho phép xác định được trạng thái:
+- Cho phép hệ thống xác định được:
   - `user_login_state` (logged-in / guest).
-  - `identity_source` (Cognito, social login…).
-- Các thông tin này được gắn vào event và lưu xuống S3/DWH để phân tích hành vi user.
+  - `identity_source` (Cognito, social login, v.v.).
+- Thông tin này được gắn vào events và lưu trong S3/DWH để phục vụ phân tích hành vi người dùng.
 
 ---
 
@@ -104,14 +104,14 @@ pre: " <b> 5.2. </b> "
 
 - Cung cấp endpoint HTTP public cho frontend:
   - `POST /clickstream`.
-- Thực hiện validate cơ bản:
-  - Method/path, throttling.
+- Thực hiện validate request cơ bản:
+  - Kiểm tra HTTP method/path, throttling.
   - Tùy chọn: tích hợp Cognito authorizer.
 
 **Luồng xử lý**
 
-- Nhận request JSON từ browser.
-- Forward payload tới **Lambda Clickstream Ingest (7)**.
+- Nhận JSON payload từ browser.
+- Chuyển tiếp mỗi payload đến **Lambda Clickstream Ingest (7)**.
 
 ---
 
@@ -119,18 +119,18 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ chính**
 
-- Nhận event từ API Gateway (6).
+- Nhận events được API Gateway (6) chuyển tiếp sang.
 - Đóng vai trò **ingestion layer**:
 
-  - Validate schema / loại event.
-  - Enrich tối thiểu:
-    - Sinh `event_id`.
-    - Chuẩn hoá `event_timestamp`.
-    - Gắn `client_id`, `session_id`, `user_login_state`, `identity_source` nếu cần.
+  - Validate schema và loại event.
+  - Thực hiện enrichment tối thiểu:
+    - Sinh `event_id` duy nhất.
+    - Chuẩn hóa `event_timestamp`.
+    - Gắn `client_id`, `session_id`, `user_login_state`, `identity_source` khi cần.
 
-- Ghi event thô (`raw JSON`) xuống **S3 Clickstream Raw bucket (8)** theo prefix/time-partition.
+- Ghi events thô (`raw JSON`) vào **S3 Clickstream Raw bucket (8)** theo time-based prefix.
 
-- Ghi log ra **CloudWatch (17)** để debug.
+- Xuất logs ra **CloudWatch (17)** để theo dõi và debug.
 
 ---
 
@@ -138,17 +138,17 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Lưu toàn bộ dữ liệu **clickstream thô** do Lambda Ingest (7) đổ vào.
-- Đóng vai trò một **“mini data lake”** cho batch ETL:
+- Lưu toàn bộ **dữ liệu clickstream thô** do Lambda Ingest (7) nạp vào.
+- Đóng vai trò một **"mini data lake"** cho downstream batch ETL:
 
-  - Dữ liệu tổ chức theo **folder/prefix thời gian**:
+  - Dữ liệu được tổ chức theo **prefix thời gian**:
     - `events/YYYY/MM/DD/`.
-  - ETL (11) đọc dữ liệu theo lô (theo giờ / theo ngày…).
+  - ETL (11) đọc dữ liệu theo lô (theo giờ / theo ngày, v.v.).
 
 **Vai trò kiến trúc**
 
-- Là **source of truth** cho clickstream:
-  - Có thể reprocess hoặc rebuild Data Warehouse nếu cần.
+- Là **source of truth** cho toàn bộ dữ liệu clickstream:
+  - Data Warehouse có thể được rebuild hoặc reprocess lại từ bucket này bất kỳ lúc nào.
 
 ---
 
@@ -156,16 +156,16 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Chạy lịch batch schedule, ví dụ: `rate(1 hour)`.
-- Mỗi lần đến lịch:
-  - Trigger **Lambda ETL (11)**.
+- Thực thi lịch batch schedule, ví dụ: `rate(1 hour)`.
+- Mỗi khi trigger được kích hoạt:
+  - Gọi **Lambda ETL (11)**.
 
 **Tại sao tách riêng**
 
-- “Đồng hồ” ETL nằm ở EventBridge:
-  - Dễ chỉnh tần suất (1h, 30’, 5’…).
-  - Dễ disable/enable.
-  - Tách “khi nào chạy” khỏi logic ETL.
+- "Đồng hồ" ETL được đặt hoàn toàn trong EventBridge:
+  - Dễ dàng điều chỉnh cadence (1h, 30m, 5m, v.v.).
+  - Có thể disable/enable mà không cần chạm vào code Lambda.
+  - Tách "thời điểm chạy" ra khỏi logic nghiệp vụ ETL.
 
 ---
 
@@ -175,27 +175,27 @@ pre: " <b> 5.2. </b> "
 
 **Amazon VPC**
 
-- Cô lập mạng, kiểm soát routing / security cho toàn platform.
+- Cô lập mạng và kiểm soát routing cùng security cho toàn bộ nền tảng.
 
 **Public subnet – OLTP**
 
 - Chứa **EC2 OLTP (20)**.
-- Có route `0.0.0.0/0 → Internet Gateway`.
+- Có route mặc định: `0.0.0.0/0 → Internet Gateway`.
 - Cho phép:
-  - Amplify/Internet truy cập PostgreSQL OLTP theo SG.
+  - Amplify và traffic internet truy cập PostgreSQL OLTP, được kiểm soát bởi security group.
 
 **Private subnet – Analytics**
 
 - Chứa:
   - **EC2 Shiny + DWH (12)**.
   - **Lambda ETL (11)**.
-- Không có public IP.
-- Chỉ đi ra ngoài qua các **VPC Endpoint (10, 15)**.
+- Không được gán public IP.
+- Lưu lượng ra ngoài chỉ đi qua **VPC Endpoints (10, 15)**.
 
 **Internet Gateway**
 
-- Cấp đường Internet cho tài nguyên trong public subnet.
-- Private subnet không route ra IGW (trừ khi bạn cấu hình khác).
+- Cung cấp kết nối internet cho các tài nguyên trong public subnet.
+- Private subnet không có route tới IGW (trừ khi được cấu hình rõ ràng).
 
 ---
 
@@ -203,14 +203,14 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Cho phép tài nguyên trong VPC (Lambda ETL, EC2 private) truy cập S3 (8) **mà không cần NAT/Internet**.
-- Traffic đến S3 đi qua **mạng riêng AWS**, bảo mật và rẻ hơn NAT Gateway.
+- Cho phép các tài nguyên trong VPC (Lambda ETL, EC2 private) truy cập S3 (8) **mà không cần đi qua NAT hoặc internet công khai**.
+- Traffic đến S3 đi hoàn toàn trong **backbone mạng riêng của AWS**, bảo mật hơn và tiết kiệm hơn so với NAT Gateway.
 
 **Vai trò**
 
-- Là mảnh ghép quan trọng để:
-  - Giữ nguyên quyết định “**không dùng NAT Gateway**”.
-  - Vẫn cho phép ETL / DW đọc ghi S3.
+- Là thành phần then chốt giúp:
+  - Duy trì quyết định thiết kế "**không dùng NAT Gateway**".
+  - Cho phép các thành phần ETL và DW đọc ghi S3 bình thường.
 
 ---
 
@@ -219,15 +219,15 @@ pre: " <b> 5.2. </b> "
 **Nhiệm vụ**
 
 - Được **EventBridge (9)** trigger theo lịch.
-- Chạy bên trong **private subnet** của VPC.
-- Thực hiện ETL batch:
+- Thực thi trong **private subnet** của VPC.
+- Chạy các thao tác ETL theo lô:
 
   - Đọc raw events từ **S3 (8)** qua Gateway Endpoint (10).
-  - Transform / clean / flatten theo schema Data Warehouse (ví dụ 15 field bạn đã chốt).
-  - Load vào **PostgreSQL DWH trên EC2 private (12)**:
-    - Insert / upsert, có thể partition theo ngày/giờ.
+  - Transform, làm sạch và flatten dữ liệu theo schema của Data Warehouse (ví dụ 15 fields đã được xác nhận).
+  - Nạp kết quả vào **PostgreSQL DWH trên EC2 private (12)**:
+    - Insert / upsert, tùy chọn phân vùng theo ngày hoặc giờ.
 
-- Ghi log và metrics ra **CloudWatch (17)**; khi lỗi có thể gửi thông báo qua **SNS (18)**.
+- Ghi logs và metrics ra **CloudWatch (17)**; khi gặp lỗi có thể bắn thông báo qua **SNS (18)**.
 
 ---
 
@@ -235,16 +235,16 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Máy chủ **Data Warehouse (PostgreSQL)** + **Shiny Server**.
-- Nhận dữ liệu đã chuẩn hoá từ Lambda ETL (11) và lưu vào các bảng DWH.
-- Cung cấp dữ liệu cho dashboard Shiny:
-  - Shiny truy vấn Postgres local/private.
+- Chạy **Data Warehouse (PostgreSQL)** và **Shiny Server**.
+- Tiếp nhận dữ liệu đã transform từ Lambda ETL (11) và lưu vào các bảng DWH.
+- Cung cấp dữ liệu cho các dashboard phân tích Shiny:
+  - Shiny chạy truy vấn trực tiếp trên Postgres instance cục bộ/private.
 
 **Đặc điểm**
 
 - Chạy trong **private subnet**.
-- Không có public IP.
-- Truy cập quản trị qua **SSM Session Manager (14 + 15)**.
+- Không có địa chỉ IP public.
+- Truy cập quản trị được thực hiện qua **SSM Session Manager (14 + 15)**.
 
 ---
 
@@ -252,14 +252,14 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Host các dashboard phân tích:
+- Host các dashboard phân tích bao gồm:
 
   - KPI tổng quan.
-  - Conversion funnel.
-  - Top products.
-  - Hành vi user, session analysis…
+  - Trực quan hóa conversion funnel.
+  - Bảng xếp hạng hiệu quả sản phẩm.
+  - Phân tích hành vi người dùng và session.
 
-- Kết nối trực tiếp tới **PostgreSQL DWH** trên cùng EC2.
+- Kết nối trực tiếp tới **PostgreSQL DWH** trên cùng EC2 instance.
 
 **Truy cập**
 
@@ -275,18 +275,18 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Cho admin truy cập EC2 private **không cần SSH, không cần public IP**.
+- Cấp quyền truy cập cho admin vào EC2 private **không cần SSH và không cần IP public**.
 - Hỗ trợ:
 
-  - Mở terminal vào EC2 (run command).
-  - **Port forwarding** (ví dụ forward `localhost:3838` → Shiny trên EC2).
-  - Audit phiên truy cập tốt hơn.
+  - Mở phiên terminal tương tác trên EC2 (run command).
+  - **Port forwarding** (ví dụ: forward `localhost:3838` → Shiny chạy trên EC2).
+  - Ghi nhật ký phiên truy cập để audit.
 
 **Ví dụ**
 
-- Bạn có thể chạy Shiny từ máy local tại:  
+- Bạn có thể truy cập Shiny từ máy local tại:  
   `http://localhost:3838/sbw_dashboard`  
-  sau khi cấu hình session port-forward thành công.
+  sau khi thiết lập thành công phiên SSM port forwarding.
 
 ---
 
@@ -294,14 +294,14 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Tạo đường kết nối **private** từ EC2/Lambda trong VPC đến các dịch vụ SSM/Session Manager:
+- Tạo đường kết nối **private** từ EC2/Lambda trong VPC tới các service endpoint của SSM/Session Manager:
 
   - `ssm`, `ssmmessages`, `ec2messages`, …
 
 - Đảm bảo:
 
-  - EC2 private vẫn dùng được SSM.
-  - Không phải đi qua Internet/NAT.
+  - EC2 private vẫn sử dụng được SSM.
+  - Traffic không bao giờ đi qua internet hoặc NAT gateway.
 
 ---
 
@@ -311,17 +311,17 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Quản lý **role/policy** cho toàn hệ thống:
+- Quản trị **roles và policies** trên toàn bộ hệ thống:
 
-  - Permission cho API Gateway, Lambda.
-  - Lambda Ingest ghi S3 (8).
-  - Lambda ETL đọc S3 (8) + connect DB (12).
-  - EC2 role cho SSM + CloudWatch agent (nếu có).
+  - Quyền cho API Gateway và Lambda.
+  - Lambda Ingest: quyền ghi vào S3 (8).
+  - Lambda ETL: quyền đọc S3 (8) và kết nối tới DB (12).
+  - EC2 instance role cho SSM và CloudWatch agent (nếu được triển khai).
 
 **Nguyên tắc**
 
-- **Least privilege**.
-- Tách quyền rõ theo chức năng và theo từng service.
+- **Least privilege** ở mọi thời điểm.
+- Quyền được phân tách rõ theo chức năng và theo từng service.
 
 ---
 
@@ -329,18 +329,18 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Thu thập **logs & metrics** từ:
+- Thu thập **logs và metrics** từ:
 
   - Lambda Ingest (7).
   - Lambda ETL (11).
   - EventBridge rule (9).
-  - EC2 nếu cài agent.
+  - EC2, nếu CloudWatch agent được cài đặt.
 
-- Định nghĩa **alarms**: lỗi ETL, lỗi ingest, số lần retry, duration, v.v.
+- Định nghĩa **alarms** cho: lỗi ETL, lỗi ingest, số lần retry, thời gian thực thi, v.v.
 
 **Vai trò**
 
-- Là nơi **debug chính** khi pipeline có vấn đề.
+- Là **trung tâm quan sát chính** để chẩn đoán vấn đề trong pipeline.
 
 ---
 
@@ -348,13 +348,13 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Là **kênh thông báo** khi có sự cố:
+- Đóng vai trò **kênh thông báo** cho các sự cố vận hành:
 
-  - ETL fail.
-  - Ingest fail.
-  - CloudWatch alarm kích hoạt.
+  - ETL job thất bại.
+  - Ingest function thất bại.
+  - CloudWatch alarm được kích hoạt.
 
-- Gửi email / SMS / webhook tuỳ cấu hình.
+- Gửi thông báo qua email / SMS / webhook tùy theo cấu hình subscription.
 
 ---
 
@@ -362,15 +362,15 @@ pre: " <b> 5.2. </b> "
 
 **Nhiệm vụ**
 
-- Chạy **PostgreSQL OLTP** phục vụ hệ thống web thương mại điện tử:
+- Chạy **PostgreSQL OLTP** phục vụ ứng dụng web thương mại điện tử:
 
   - Giao dịch đơn hàng.
-  - Thông tin sản phẩm, tồn kho.
-  - Thông tin người dùng.
+  - Dữ liệu catalog sản phẩm và tồn kho.
+  - Thông tin tài khoản người dùng.
 
 **Liên hệ với DWH**
 
-- **Tách** khỏi Data Warehouse (12):
+- **Tách biệt** khỏi Data Warehouse (12):
 
-  - OLTP tối ưu cho **giao dịch**.
-  - DWH tối ưu cho **phân tích, batch load**.
+  - OLTP được tối ưu cho **các thao tác đọc/ghi giao dịch**.
+  - DWH được tối ưu cho **truy vấn phân tích và nạp dữ liệu theo lô**.

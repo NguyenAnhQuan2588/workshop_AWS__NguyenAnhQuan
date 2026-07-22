@@ -5,19 +5,14 @@ chapter: false
 pre: " <b> 1.8. </b> "
 ---
 
-### Week 8 Objective: Define project goals
+### Week 8 Objective
 
 #### Work activities
 
-- The team researched the concept of Sessionization, exploring how user sessions are formed in behavior analysis.
-- Analyzed the overall goals of the project and the reasons for choosing the sessionization problem instead of other directions.
-- Started studying the clickstream data flow and how it is used in real-world data analytics systems.
-- Discussed the general operating model of the system: tracking, ingest, process, sessionize, store, analyze.
-
-#### Results
-
-- Clearly defined the scope: The project focuses on building a real-time clickstream data processing and sessionization pipeline.
-- Finalized the objective: Leveraging user session data to support behavior analysis.
-- Unified meeting methods and team working rules.
-
+- Translated AWS blogs and added them to the personal workshop.
+- Completed labs (45-52):
+  - Deployed a MySQL Database (High-Availability) on Amazon Lightsail.
+  - Launched an application using a Docker container via Lightsail Container.
+  - Practiced using the AWS Cloud9 integrated development environment (IDE).
+  - Set up an automated CI/CD pipeline using AWS Developer Tools (CodeStar, CodePipeline, CodeDeploy...).
 

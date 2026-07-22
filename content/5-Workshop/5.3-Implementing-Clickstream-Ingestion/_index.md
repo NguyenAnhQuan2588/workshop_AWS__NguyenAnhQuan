@@ -9,33 +9,33 @@ pre: " <b> 5.3. </b> "
 
 High-level data flow:
 
-1. User interacts with the Next.js frontend (`ClickSteam.NextJS`) hosted on Amplify.  
-2. Frontend JavaScript bundles clickstream metadata (page/user/session/product) into a JSON payload.  
-3. Browser sends `POST` requests to `clickstream-http-api` at `POST /clickstream`.  
-4. API Gateway forwards the request to `clickstream-lambda-ingest`.  
-5. Lambda Ingest enriches `_ingest` metadata and writes one JSON file per event to:
+1. A user interacts with the Next.js frontend (`ClickSteam.NextJS`) hosted on Amplify.  
+2. The frontend JavaScript bundles clickstream metadata (page/user/session/product context) into a JSON payload.  
+3. The browser sends a `POST` request to `clickstream-http-api` at the route `POST /clickstream`.  
+4. API Gateway routes the request to `clickstream-lambda-ingest`.  
+5. Lambda Ingest appends `_ingest` metadata and writes one JSON file per event to:
    - `s3://clickstream-s3-ingest/events/YYYY/MM/DD/HH/event-<uuid>.json` (UTC hour partition)  
 
-Design stays **stateless** and **append-only**, suitable for downstream batch ETL and idempotent inserts.
+The design remains **stateless** and **append-only**, making it well-suited for downstream batch ETL and idempotent inserts.
 
 ---
 
 ## 5.3.2 S3 Bucket Design
 
-Two buckets are relevant:
+Two buckets are involved:
 
 1. **Asset Bucket** — `clickstream-s3-sbw`  
    - Stores website assets: product images, static files.  
-   - Not used for clickstream events.
+   - Not used for clickstream event storage.
 
 2. **RAW Clickstream Bucket** — `clickstream-s3-ingest`  
    - Stores only raw clickstream JSON events.  
    - Partitioned by UTC hour: `events/YYYY/MM/DD/HH/`  
-   - File naming: `event-<uuid>.json`  
+   - File naming convention: `event-<uuid>.json`  
 
-Hour partitions make batch ETL easier (e.g., process previous hour or a specific day/hour prefix).
+Hour-based partitioning makes batch ETL more efficient (e.g., process the previous hour or a specific day/hour prefix).
 
-![S3 RAW bucket events](/images/aws-s3-clickstream-ingest-events.png)
+
 
 ---
 
@@ -47,16 +47,16 @@ Hour partitions make batch ETL easier (e.g., process previous hour or a specific
 
 The `clickstream-lambda-ingest` function:
 
-- Parses incoming JSON payloads from API Gateway.  
-- Adds `_ingest` metadata only: `receivedAt`, `sourceIp`, `userAgent`, `method`, `path`, `requestId`, `apiId`, `stage`, `traceId`.  
-- Writes the event body **as provided by the client** (no server-side filling of user/session/product fields) to S3.
+- Parses the incoming JSON payload received from API Gateway.  
+- Appends `_ingest` metadata only: `receivedAt`, `sourceIp`, `userAgent`, `method`, `path`, `requestId`, `apiId`, `stage`, `traceId`.  
+- Writes the event body **exactly as sent by the client** (no server-side filling of user/session/product fields) to S3.
 
 ### IAM Permissions
 
-The execution role should allow:
+The execution role must grant:
 
 - `s3:PutObject` on: `arn:aws:s3:::clickstream-s3-ingest/events/*`  
-- CloudWatch Logs APIs to write logs.
+- CloudWatch Logs APIs to emit function logs.
 
 No read permissions are needed for this function.
 
@@ -64,60 +64,60 @@ No read permissions are needed for this function.
 
 ## 5.3.4 API Gateway HTTP API — `clickstream-http-api`
 
-The HTTP API provides a public HTTPS endpoint for ingestion:
+The HTTP API exposes a public HTTPS endpoint for event ingestion:
 
 - Route:
   - `POST /clickstream` → Lambda `clickstream-lambda-ingest`  
 
 ![Route POST /clickstream](/images/aws-apigw-clickstream-routes.png)
 
-Recommended options:
+Recommended settings:
 
-- Enable **CORS** so the Amplify frontend can call it from its own domain.  
+- Enable **CORS** so the Amplify frontend can call the endpoint from its own domain.  
 - Enable **access logs** to a CloudWatch log group for debugging.  
-- (Optional) Attach an **API key** or **Cognito authorizer** if you want to restrict ingestion.
+- (Optional) Attach an **API key** or **Cognito authorizer** to restrict who can submit events.
 
 ---
 
 ## 5.3.5 Frontend Clickstream Publisher (Logic)
 
 ### Identity & idempotency
-- Generates `eventId` per event (UUID) for idempotent inserts.
-- Maintains `clientId` in `localStorage` (sticky per browser).
-- Maintains `sessionId` in `sessionStorage` (30m idle timeout) and `isFirstVisit`.
+- Generates a unique `eventId` per event (UUID) to guarantee idempotent inserts.
+- Persists `clientId` in `localStorage` (sticky across browser sessions).
+- Maintains `sessionId` in `sessionStorage` (30-minute idle timeout) and tracks `isFirstVisit`.
 
 ### User, page, and click metadata
-- User/auth (if available): `userId`, `userLoginState`, optional `identity_source`.
-- Page/click: `pageUrl`, `referrer`, element metadata for clicks (tag/id/role/text/dataset).
+- User/auth context (when available): `userId`, `userLoginState`, optional `identity_source`.
+- Page/click context: `pageUrl`, `referrer`, element metadata for clicks (tag/id/role/text/dataset).
 
 ### Product context
-- Sent as `product.{id,name,category,brand,price,discountPrice,urlPath}`; ETL maps to DW `context_product_*` columns.
+- Sent as `product.{id,name,category,brand,price,discountPrice,urlPath}`; ETL maps these to the DW `context_product_*` columns.
 
 ### Event coverage
-- Auto: `page_view`, global `click`.
-- Custom/product: `home_view`, `category_view`, `product_view`, `add_to_cart_click`, `remove_from_cart_click`, `wishlist_toggle`, `share_click`, `login_open`, `login_success`, `logout`, `checkout_start`, `checkout_complete`.
+- Auto-tracked: `page_view`, global `click`.
+- Custom/product events: `home_view`, `category_view`, `product_view`, `add_to_cart_click`, `remove_from_cart_click`, `wishlist_toggle`, `share_click`, `login_open`, `login_success`, `logout`, `checkout_start`, `checkout_complete`.
 
 ### Domain event wiring 
-- `home_view`: home page load (tracker component).
-- `category_view`: category listing render (slug/params).
-- `product_view`: product detail render (has product context).
-- `add_to_cart_click` / `remove_from_cart_click`: cart add/remove handlers.
+- `home_view`: fires on home page load (tracker component).
+- `category_view`: fires on category listing render (slug/params).
+- `product_view`: fires on product detail render (includes product context).
+- `add_to_cart_click` / `remove_from_cart_click`: cart add/remove action handlers.
 - `wishlist_toggle`: wishlist button handler.
 - `share_click`: share button handler.
-- `login_open` / `login_success` / `logout`: auth flows.
-- `checkout_start` / `checkout_complete`: checkout entry and success flows.
+- `login_open` / `login_success` / `logout`: authentication flows.
+- `checkout_start` / `checkout_complete`: checkout entry and order success flows.
 
 ### Components & wiring
-- `lib/clickstreamClient.ts`: identity/session handling, base builders, console logging, fire-and-forget `fetch` to `NEXT_PUBLIC_CLICKSTREAM_ENDPOINT` (required env).
-- `lib/clickstreamEvents.ts`: domain helpers that wrap `trackCustom` and build product/cart/order context.
-- `contexts/ClickstreamProvider.tsx` + `app/layout.tsx`: wire global provider, auto `page_view`, global click listener.
-- Tracker components: `HomeTracker.tsx`, `CategoryTracker.tsx`, `ProductViewTracker.tsx` skip the auto page_view and emit domain events.
-- Instrumented UI: `AddToCartButton.tsx`, `FavoriteButton.tsx`, `app/(client)/cart/page.tsx` emit add/remove cart, wishlist, checkout events and mark buttons with `global-clickstream-ignore-click` to avoid duplicate global clicks.
+- `lib/clickstreamClient.ts`: identity/session management, base event builders, console logging, fire-and-forget `fetch` to `NEXT_PUBLIC_CLICKSTREAM_ENDPOINT` (required env var).
+- `lib/clickstreamEvents.ts`: domain helpers that wrap `trackCustom` and build product/cart/order context objects.
+- `contexts/ClickstreamProvider.tsx` + `app/layout.tsx`: wires the global provider, auto-fires `page_view`, and registers the global click listener.
+- Tracker components: `HomeTracker.tsx`, `CategoryTracker.tsx`, `ProductViewTracker.tsx` suppress the auto page_view and emit domain-specific events.
+- Instrumented UI: `AddToCartButton.tsx`, `FavoriteButton.tsx`, `app/(client)/cart/page.tsx` emit add/remove cart, wishlist, and checkout events; buttons are marked with `global-clickstream-ignore-click` to prevent duplicate global click events.
 
 ### Runtime behavior
-- Client-side only (no SSR effects).
-- Logs every event to console; if endpoint missing, runs in dry-run and warns once.
-- Network errors are non-blocking to the UI.
+- Client-side only (no SSR side effects).
+- Logs every event to the console; if the endpoint is missing, runs in dry-run mode and warns once.
+- Network errors are non-blocking — the UI continues to function normally.
 
 ## 5.3.6 Field projection (frontend -> S3 -> DW)
 
@@ -155,22 +155,22 @@ await fetch("https://<api-id>.execute-api.ap-southeast-1.amazonaws.com/clickstre
 });
 ```
 
-ETL maps `eventId -> event_id` (PK with ON CONFLICT DO NOTHING), derives `event_timestamp` from `_ingest.receivedAt` > payload > S3 LastModified, and inserts into `clickstream_dw.public.clickstream_events`.
+ETL maps `eventId -> event_id` (PK with ON CONFLICT DO NOTHING), derives `event_timestamp` from `_ingest.receivedAt` > payload > S3 LastModified, and inserts records into `clickstream_dw.public.clickstream_events`.
 
 ---
 
 ## 5.3.6 Testing & Validation
 
-To validate ingestion:
+To verify that ingestion is working correctly:
 
 1. Use the Amplify app UI:
-   - Browse a few product pages  
-   - Add items to cart  
-2. Check S3 bucket `clickstream-s3-ingest`:
+   - Navigate through a few product pages  
+   - Add items to the shopping cart  
+2. Inspect the S3 bucket `clickstream-s3-ingest`:
    - Navigate to `events/YYYY/MM/DD/HH/`  
-   - Confirm new `event-<uuid>.json` files appear.  
-3. Inspect one JSON file:
-   - Verify that `_ingest` metadata and product context are present.  
-4. Review logs:
+   - Confirm that new `event-<uuid>.json` files have appeared.  
+3. Open and inspect one JSON file:
+   - Verify that `_ingest` metadata and product context fields are present.  
+4. Review the logs:
    - API Gateway access logs  
    - Lambda function logs  

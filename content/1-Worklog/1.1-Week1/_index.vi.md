@@ -57,14 +57,4 @@ pre: " <b> 1.1. </b> "
   - Tạo User Group vào console của AWS tìm kiếm **IAM (Identity and Access Management)**.
   - Chọn **User Group** => **Create user group** => **Nhập tên group và tạo**.
   - Chọn vào group đã tạo, chon add user để add, chon user cần add và add user.
-    ![anh](/images/1.png)
-    ![anh](/images/2.png)
-    ![anh](/images/3.png)
-    ![anh](/images/4.png)
-    ![anh](/images/5.png)
-    ![anh](/images/6.png)
-    ![anh](/images/7.png)
-    ![anh](/images/8.png)
-    ![anh](/images/9.png)
-    ![anh](/images/10.png)
-    ![anh](/images/11.png)
+

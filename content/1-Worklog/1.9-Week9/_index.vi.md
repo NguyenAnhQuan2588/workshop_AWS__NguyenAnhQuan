@@ -5,24 +5,12 @@ chapter: false
 pre: " <b> 1.9. </b> "
 ---
 
-### Mục tiêu tuần 9: Xây dựng kiến trúc hệ thống
+### Mục tiêu tuần 9
 
 #### Nội dung làm việc
 
-- Nghiên cứu chi tiết các dịch vụ AWS phục vụ pipeline thời gian thực:
-
-  - Kinesis Stream / Firehose (streaming ingest)
-  - AWS Lambda (xử lý real-time)
-  - S3 (lưu trữ)
-  - Glue / EMR (ETL & phân tích)
-  - Athena / QuickSight (reporting)
-
-- Mỗi thành viên đưa ra đề xuất kiến trúc: streaming hay batch, các bước xử lý session, data schema.
-- Thảo luận về các giải pháp MLOps end-to-end cho phần processing & automation.
-
-#### Kết quả
-
-- Xác định được kiến trúc tổng thể phù hợp với nhu cầu: ingest → transform → sessionization → lưu trữ → analyze.
-- Team thống nhất lựa chọn mô hình kiến trúc streaming-first.
-
+- Viết báo cáo thu hoạch về event.
+- Dịch blog AWS.
+- Tự học tại nhà.
+- Họp team offline.
 

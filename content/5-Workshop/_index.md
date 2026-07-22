@@ -12,19 +12,19 @@ pre: "<b>5. </b>"
 
 #### Overview
 
-This workshop implements a **Batch-Based Clickstream Analytics Platform** for an e-commerce website selling computer products.
+This workshop walks through the deployment of a **Batch-Based Clickstream Analytics Platform** built for an e-commerce website selling computer products.
 
-The system collects clickstream events from the frontend, stores raw JSON data in **Amazon S3**, processes events via scheduled ETL (**AWS Lambda + EventBridge**), and loads analytical data into a dedicated **PostgreSQL Data Warehouse on EC2** inside a private subnet.
+The platform captures clickstream events emitted by the frontend, persists the raw JSON payloads in **Amazon S3**, runs scheduled ETL jobs (**AWS Lambda + EventBridge**), and loads the transformed records into a dedicated **PostgreSQL Data Warehouse on EC2** inside a private subnet.
 
-Analytics dashboards are built using **R Shiny**, running on the same EC2 instance as the Data Warehouse, and accessed via **AWS Systems Manager Session Manager**.
+Analytics dashboards are powered by **R Shiny**, deployed on the same EC2 instance as the Data Warehouse, and accessed securely via **AWS Systems Manager Session Manager**.
 
-The platform is engineered with:
+The platform is designed around the following principles:
 
-- Clear separation between **OLTP vs Analytics** workloads  
-- Private-only analytical backend (**no public DW access**)  
-- Cost-efficient, scalable AWS serverless components  
-- Zero-SSH admin access via **SSM Session Manager** into the private DW / Shiny EC2 
-- You can run the Shiny app locally at **localhost:3838**
+- A strict boundary between **OLTP and Analytics** workloads  
+- A fully private analytical backend (**no public-facing DW access**)  
+- Serverless AWS components to maximize cost-efficiency and scalability  
+- Zero-SSH admin access: all management is handled through **SSM Session Manager** into the private DW / Shiny EC2  
+- The Shiny app is accessible locally at **localhost:3838**
 
 #### Key Architecture Components
 

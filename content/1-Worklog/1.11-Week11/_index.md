@@ -5,30 +5,13 @@ chapter: false
 pre: " <b> 1.11. </b> "
 ---
 
-### Week 11 Objective: Proposal, Cost Estimation, Finalize Documentation
+### Week 11 Objective
 
 #### Work activities
 
-- Wrote the proposal:
-
-  - Project overview
-  - AWS architecture
-  - Data flow
-  - Estimated cost
-  - Reasons for technology choices
-
-- Estimated AWS costs based on assumed traffic:
-
-  - Data ingestion cost (Kinesis)
-  - Compute (Lambda)
-  - Storage (S3)
-  - ETL/Query (Glue, Athena)
-
-- Revised and finalized the project report for submission.
-
-#### Results
-
-- Proposal is nearly complete (some sections still need refinement).
-- Cost estimation is reasonably constructed based on the usage model.
-- Deliverables are almost fully completed.
+- Ran tests and evaluated personal Workshop.
+- Reviewed and optimized costs.
+- Drafted the internship report.
+- Self-studied at home.
+- Held an offline team meeting to discuss features.
 

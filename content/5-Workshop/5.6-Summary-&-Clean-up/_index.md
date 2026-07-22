@@ -7,76 +7,76 @@ pre: " <b> 5.6. </b> "
 
 ## 5.6.1 Summary
 
-After completing the lab, we have built a fully working **Clickstream Analytics Platform**:
+With the lab complete, we have successfully deployed a functional **Clickstream Analytics Platform**:
 
 1. **User-Facing Layer**
-   - Next.js application (`ClickSteam.NextJS`) on Amplify + CloudFront  
-   - User authentication with Cognito  
-   - PostgreSQL OLTP database (`clickstream_web`) on `SBW_EC2_WebDB` (public subnet)  
+   - The Next.js application (`ClickSteam.NextJS`) hosted via Amplify and CloudFront  
+   - Identity management and authentication powered by Cognito  
+   - A PostgreSQL OLTP database (`clickstream_web`) running on `SBW_EC2_WebDB` (located in a public subnet)  
 
 2. **Ingestion & Raw Data Layer**
-   - API Gateway HTTP API: `clickstream-http-api` (route `POST /clickstream`)  
-   - Lambda Ingest: `clickstream-lambda-ingest`  
-   - S3 Raw bucket: `clickstream-s3-ingest/events/YYYY/MM/DD/event-<uuid>.json`  
+   - The API Gateway HTTP API: `clickstream-http-api` (exposing `POST /clickstream`)  
+   - The Lambda Ingest function: `clickstream-lambda-ingest`  
+   - The S3 Raw storage bucket: `clickstream-s3-ingest/events/YYYY/MM/DD/event-<uuid>.json`  
 
 3. **Private Analytics Layer**
-   - VPC with public & private subnets (`SBW_Project_VPC`)  
-   - S3 Gateway Endpoint, SSM Interface Endpoints  
-   - Data Warehouse on EC2: `SBW_EC2_ShinyDWH`, database `clickstream_dw`  
-   - ETL Lambda inside the VPC: `SBW_Lamda_ETL`, triggered by `SBW_ETL_HOURLY_RULE`  
-   - R Shiny dashboards (`sbw_dashboard`) accessible only via SSM port forwarding  
+   - A custom VPC configured with both public and private subnets (`SBW_Project_VPC`)  
+   - Secure routing via an S3 Gateway Endpoint and SSM Interface Endpoints  
+   - A Data Warehouse on EC2: `SBW_EC2_ShinyDWH`, managing the `clickstream_dw` database  
+   - A VPC-bound ETL Lambda: `SBW_Lamda_ETL`, invoked on schedule by `SBW_ETL_HOURLY_RULE`  
+   - Analytics visualizations via R Shiny dashboards (`sbw_dashboard`), securely accessed through SSM port forwarding  
 
-Overall, this architecture demonstrates how to design a **batch-based analytics platform** that is secure, cost-optimized, and primarily built on serverless components plus two EC2 instances.
+In summary, this architecture highlights best practices for designing a **batch-based analytics platform** that prioritizes security and cost optimization, utilizing a mix of serverless services and targeted EC2 compute.
 
 ---
 
 ## 5.6.2 Key Takeaways
 
 - **Separation of concerns**:
-  - OLTP and Analytics are separated on 2 different EC2 instances, belonging to different logical domains.  
+  - The OLTP and Analytics workloads are strictly separated across two different EC2 instances, isolating their logical domains and performance requirements.  
 
 - **Security**:
-  - The DW and Shiny run in a private subnet with no public IP.  
-  - SSM Session Manager replaces traditional SSH.  
-  - The S3 Gateway Endpoint keeps S3 traffic inside the AWS private network.  
+  - The Data Warehouse and Shiny Server operate in a private subnet, shielded from direct internet access.  
+  - SSH access is entirely replaced by the more secure SSM Session Manager.  
+  - The S3 Gateway Endpoint ensures that S3 traffic never leaves the AWS private backbone.  
 
 - **Cost optimization**:
-  - No NAT Gateway is used.  
-  - ETL relies on serverless (Lambda + EventBridge).  
-  - S3 is used as low-cost storage for raw data.  
+  - The architecture completely avoids the cost of a NAT Gateway.  
+  - The ETL pipeline is driven by cost-effective serverless components (Lambda + EventBridge).  
+  - Amazon S3 provides highly durable, low-cost storage for the raw event data.  
 
 - **Easy to extend**:
-  - The current design is batch-based, but can be extended to real-time, more complex analytics, or migrated to other DW technologies.
+  - While currently engineered for batch processing, the foundation can be adapted for real-time streaming, advanced machine learning analytics, or migrated to enterprise-grade DW solutions.
 
 ---
 
 ## 5.6.3 Resource Clean-up
 
 1. **Amplify & CloudFront**
-   - Delete the Amplify app (`ClickSteam.NextJS`).  
-   - This action also deletes the associated CloudFront distribution.
+   - Delete the Amplify application (`ClickSteam.NextJS`).  
+   - This process automatically tears down the associated CloudFront distribution.
 
 2. **API Gateway & Lambda**
-   - Delete `clickstream-http-api`.  
-   - Delete the Lambda functions:
+   - Remove the `clickstream-http-api` API Gateway.  
+   - Delete the following Lambda functions:
      - `clickstream-lambda-ingest`  
      - `SBW_Lamda_ETL`  
 
 3. **EventBridge**
-   - Delete the rule `SBW_ETL_HOURLY_RULE`.  
+   - Delete the scheduling rule named `SBW_ETL_HOURLY_RULE`.  
 
 4. **S3 Buckets**
-   - Empty and then delete:
-     - `clickstream-s3-ingest` (RAW clickstream)  
-     - `clickstream-s3-sbw` (assets), if it is not used for other projects  
+   - Empty the contents, then delete the following buckets:
+     - `clickstream-s3-ingest` (the RAW clickstream store)  
+     - `clickstream-s3-sbw` (the assets bucket), provided it is not shared with other projects  
 
 5. **EC2 Instances**
-   - Stop or terminate:
+   - Stop or permanently terminate:
      - `SBW_EC2_WebDB`  
      - `SBW_EC2_ShinyDWH`  
-   - Release any associated Elastic IP (if attached).
+   - Release any Elastic IPs that were attached to these instances.
 
 6. **VPC & Networking**
-   - Delete VPC endpoints (S3 Gateway, SSM Interface Endpoints).  
-   - Delete route tables, subnets, and the Internet Gateway.  
-   - Finally, delete `SBW_Project_VPC` if it is no longer needed.
+   - Remove all VPC endpoints (S3 Gateway, and all SSM Interface Endpoints).  
+   - Delete the route tables, subnets, and finally the Internet Gateway.  
+   - Once empty, delete the `SBW_Project_VPC` itself.

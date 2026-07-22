@@ -7,24 +7,24 @@ pre: " <b> 5.1. </b> "
 
 ### Business Context
 
-The target system is an e-commerce website selling laptops, monitors, and accessories.  
+The target system is an e-commerce website that sells laptops, monitors, and computer accessories.  
 The business wants to:
 
-- Understand **how users interact** with the website:
-  - Which pages they visit
-  - Which products they view
-  - Add-to-cart and checkout events
-- Measure the **conversion funnel** from product view → add to cart → checkout
-- Identify:
-  - Top products (best-selling / most viewed)
-  - Peak activity windows (by hour, by day)
-- Use these insights to design the most effective marketing strategies to:
-  - Increase revenue
-  - Optimize and reduce costs
+- Gain insight into **how users engage** with the website:
+  - Which pages they navigate to
+  - Which products they browse and view
+  - Add-to-cart and checkout interactions
+- Measure the **conversion funnel** across the journey: product view → add to cart → checkout
+- Pinpoint:
+  - High-performing products (bestsellers / most-viewed)
+  - Peak traffic windows (by hour and by day)
+- Leverage these insights to craft effective marketing strategies that:
+  - Grow revenue
+  - Optimize spending and reduce unnecessary costs
 
-To achieve this, the platform:
+To accomplish this, the platform:
 
-- Collects a dataset of user behavior via clickstream events, then produces statistics and analytics.
+- Captures a dataset of user behavioral signals through clickstream events, then produces statistics and analytical reports.
 
 ---
 
@@ -32,74 +32,74 @@ To achieve this, the platform:
 
 #### Understand the Architecture
 
-- Be able to explain the overall architecture of a **batch-based clickstream analytics platform** using:
+- Be able to walk through the end-to-end architecture of a **batch-based clickstream analytics platform** that uses:
   - Amplify, CloudFront, Cognito, EC2 OLTP in the **user-facing domain**
   - API Gateway, Lambda Ingest, S3 Raw bucket in the **ingestion & data lake domain**
   - ETL Lambda, PostgreSQL DW on EC2, R Shiny in the **analytics & DW domain**
-- Be able to explain why OLTP and Analytics are separated:
-  - **Logical**: different schemas, different types of workloads
-  - **Physical**: public subnet vs private subnet, two different EC2 instances
+- Be able to articulate why OLTP and Analytics are kept separate:
+  - **Logical**: different database schemas, different types of workloads
+  - **Physical**: public subnet vs. private subnet, two distinct EC2 instances
 
 #### Hands-on Skills
 
-- Send clickstream events from the frontend to API Gateway → Lambda Ingest → S3 Raw (`clickstream-s3-ingest`).
-- Configure a **Gateway VPC Endpoint for S3** and adjust the private route table so private components can access S3.
-- Configure and test an **ETL Lambda** (`SBW_Lamda_ETL`) that can:
-  - Read raw JSON files from `s3://clickstream-s3-ingest/events/YYYY/MM/DD/`
-  - Transform events into rows for the table `clickstream_dw.public.clickstream_events`
-- Connect to the DW (`SBW_EC2_ShinyDWH`) and run sample SQL queries:
-  - Count the number of events
+- Send clickstream events from the frontend through API Gateway → Lambda Ingest → S3 Raw (`clickstream-s3-ingest`).
+- Set up a **Gateway VPC Endpoint for S3** and update the private route table so private components can reach S3.
+- Configure and validate an **ETL Lambda** (`SBW_Lamda_ETL`) capable of:
+  - Reading raw JSON files from `s3://clickstream-s3-ingest/events/YYYY/MM/DD/`
+  - Transforming events into rows for the table `clickstream_dw.public.clickstream_events`
+- Connect to the DW (`SBW_EC2_ShinyDWH`) and execute sample SQL queries:
+  - Event count
   - Top products
-  - Basic funnel
-- Access **R Shiny dashboards** via SSM port forwarding and interpret:
+  - Basic funnel analysis
+- Access **R Shiny dashboards** through SSM port forwarding and interpret:
   - Funnel charts
-  - Product engagement charts
-  - Time-series charts of activity over time
+  - Product engagement visualizations
+  - Time-series activity charts
 
 #### Security & Cost Awareness
 
-- Understand the importance of protecting user behavior data by placing `EC2_ShinyDWH` and `Lambda_ETL` in **private subnets**:
-  - Only allow `Lambda_ETL` to access S3 through a **Gateway VPC Endpoint**
-  - Only allow admins to access `EC2_ShinyDWH` through SSM using **Interface VPC Endpoints**
-- Recognize the main security controls:
+- Understand why user behavioral data is protected by placing `EC2_ShinyDWH` and `Lambda_ETL` inside **private subnets**:
+  - Only `Lambda_ETL` is allowed to reach S3 via a **Gateway VPC Endpoint**
+  - Only administrators can access `EC2_ShinyDWH` via SSM using **Interface VPC Endpoints**
+- Recognize the principal security controls in place:
   - Separation of public and private subnets
-  - Security groups between `sg_oltp_webDB`, `sg_Lambda_ETL`, `sg_analytics_ShinyDWH`
-  - Least-privilege IAM permissions for each Lambda
-  - Zero-SSH administration using AWS Systems Manager Session Manager (no bastion host, no open SSH port).
+  - Security group boundaries between `sg_oltp_webDB`, `sg_Lambda_ETL`, `sg_analytics_ShinyDWH`
+  - Least-privilege IAM permissions scoped per Lambda function
+  - Zero-SSH administration via AWS Systems Manager Session Manager (no bastion host, no open SSH port).
 
 ---
 
 ### Workshop Scope
 
-The workshop focuses on three main capability areas:
+The workshop concentrates on three core capability areas:
 
 1. **Implementing the clickstream ingestion layer**
 
-   - Capture browser interactions in the Next.js frontend
-   - Send JSON events to API Gateway (`clickstream-http-api`)
-   - Store raw events over time in `clickstream-s3-ingest`
+   - Capture browser-side interactions within the Next.js frontend
+   - Push JSON events to API Gateway (`clickstream-http-api`)
+   - Persistently store raw events over time in `clickstream-s3-ingest`
 
 2. **Building the private analytics layer**
 
-   - Create the VPC, subnets, route tables, and VPC endpoints
+   - Provision the VPC, subnets, route tables, and VPC endpoints
    - Run `SBW_Lamda_ETL` inside the VPC
-   - Connect the ETL Lambda to the private EC2 Data Warehouse (`SBW_EC2_ShinyDWH`)
+   - Wire the ETL Lambda to the private EC2 Data Warehouse (`SBW_EC2_ShinyDWH`)
 
 3. **Visualizing analytics with Shiny dashboards**
-   - Query `clickstream_dw` from R Shiny
-   - Display funnels, product performance, and time trends
+   - Query `clickstream_dw` directly from R Shiny
+   - Render funnels, product performance metrics, and time-based trends
    - Access Shiny through **SSM Session Manager port forwarding**
 
 ---
 
 ### Out of Scope
 
-To keep the workshop focused and manageable, we **do not** go deep into:
+To keep the workshop focused and achievable, we **do not** cover in depth:
 
-- Real-time streaming (Kinesis, Kafka, MSK, …)
-- Advanced DW services (Amazon Redshift / Redshift Serverless)
-- Recommendation, segmentation, or anomaly detection using ML
-- Production-grade CI/CD, blue/green deployments, multi-account setups
-- Advanced SQL tuning or detailed index design
+- Real-time streaming solutions (Kinesis, Kafka, MSK, …)
+- Managed DW services (Amazon Redshift / Redshift Serverless)
+- Recommendation engines, user segmentation, or ML-based anomaly detection
+- Production-grade CI/CD pipelines, blue/green deployments, or multi-account architectures
+- Advanced SQL performance tuning or detailed index strategy
 
-These are natural follow-up directions once the batch-based clickstream foundation in this workshop is in place.
+These represent natural next steps once the batch-based clickstream foundation established in this workshop is operational.

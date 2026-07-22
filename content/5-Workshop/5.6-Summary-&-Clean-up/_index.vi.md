@@ -1,5 +1,5 @@
 ---
-title: "Tổng kết & Dọn dẹp"
+title: "Tóm tắt & Dọn dẹp"
 weight: 56
 chapter: false
 pre: " <b> 5.6. </b> "
@@ -7,74 +7,76 @@ pre: " <b> 5.6. </b> "
 
 ## 5.6.1 Tóm tắt
 
-Sau khi hoàn thành bài Lab chúng ta đã dựng được một **Clickstream Analytics Platform** hoàn chỉnh:
+Kết thúc bài Lab, chúng ta đã xây dựng thành công một nền tảng **Clickstream Analytics Platform** vận hành hoàn chỉnh:
 
 1. **Lớp User-Facing**
-   - Ứng dụng Next.js (`ClickSteam.NextJS`) trên Amplify + CloudFront  
-   - Xác thực người dùng bằng Cognito  
-   - PostgreSQL OLTP (`clickstream_web`) trên `SBW_EC2_WebDB` (public subnet)  
+   - Ứng dụng Next.js (`ClickSteam.NextJS`) được triển khai thông qua Amplify và CloudFront  
+   - Quản lý định danh và xác thực người dùng bằng Cognito  
+   - Cơ sở dữ liệu PostgreSQL OLTP (`clickstream_web`) đặt trên `SBW_EC2_WebDB` (nằm trong public subnet)  
 
 2. **Lớp Ingestion & Raw Data**
-   - API Gateway HTTP API: `clickstream-http-api` (route `POST /clickstream`)  
-   - Lambda Ingest: `clickstream-lambda-ingest`  
-   - S3 Raw bucket: `clickstream-s3-ingest/events/YYYY/MM/DD/event-<uuid>.json`  
+   - Endpoint API Gateway HTTP API: `clickstream-http-api` (cung cấp route `POST /clickstream`)  
+   - Hàm xử lý Lambda Ingest: `clickstream-lambda-ingest`  
+   - S3 Raw bucket lưu trữ gốc: `clickstream-s3-ingest/events/YYYY/MM/DD/event-<uuid>.json`  
 
 3. **Lớp Analytics Private**
-   - VPC với public & private subnets (`SBW_Project_VPC`)  
-   - S3 Gateway Endpoint, SSM Interface Endpoints  
-   - Data Warehouse trên EC2: `SBW_EC2_ShinyDWH`, DB `clickstream_dw`  
-   - ETL Lambda trong VPC: `SBW_Lamda_ETL`, được trigger bởi `SBW_ETL_HOURLY_RULE`  
-   - R Shiny dashboards (`sbw_dashboard`) chỉ truy cập qua SSM port forwarding  
+   - Mạng VPC chứa cả public và private subnets (`SBW_Project_VPC`)  
+   - Định tuyến an toàn bằng S3 Gateway Endpoint và các SSM Interface Endpoints  
+   - Data Warehouse chạy trên EC2: `SBW_EC2_ShinyDWH`, quản trị DB `clickstream_dw`  
+   - Hàm ETL Lambda hoạt động trong VPC: `SBW_Lamda_ETL`, được tự động kích hoạt bởi `SBW_ETL_HOURLY_RULE`  
+   - Các R Shiny dashboards (`sbw_dashboard`) phục vụ phân tích, được bảo mật và chỉ có thể truy cập bằng SSM port forwarding  
 
-Tổng thể, kiến trúc này cho thấy cách thiết kế một **batch-based analytics platform** an toàn, tối ưu chi phí, chủ yếu dùng serverless + hai EC2.
+Tựu trung, kiến trúc này phác họa phương pháp thiết kế một **batch-based analytics platform** đề cao tính bảo mật, tối ưu hóa chi phí, tận dụng sức mạnh của các dịch vụ serverless kết hợp với hai máy chủ EC2.
 
 ---
 
 ## 5.6.2 Nội dung chính 
 
-- **Separation of concerns**:
-  - OLTP và Analytics tách trên 2 EC2 khác nhau, thuộc các domain logic khác nhau.  
+- **Separation of concerns (Phân tách mối quan tâm)**:
+  - Khối lượng công việc OLTP và Analytics được phân chia rõ ràng trên hai máy chủ EC2, tách biệt hoàn toàn về miền logic và yêu cầu hiệu năng.  
+
 - **Security**:
-  - DW và Shiny chạy trong private subnet, không có public IP.  
-  - SSM Session Manager thay thế SSH truyền thống.  
-  - S3 Gateway Endpoint giữ traffic S3 trong private network của AWS.  
+  - DW và Shiny Server được bảo vệ an toàn trong private subnet, không lộ diện trước internet.  
+  - Truy cập SSH rủi ro được thay thế hoàn toàn bằng SSM Session Manager an toàn hơn.  
+  - S3 Gateway Endpoint đảm bảo mọi lưu lượng tới S3 luôn nằm gọn trong mạng nội bộ của AWS.  
+
 - **Tối ưu chi phí**:
-  - Không sử dụng NAT Gateway.  
-  - ETL dùng serverless (Lambda + EventBridge).  
-  - S3 làm storage giá rẻ cho dữ liệu thô.  
+  - Hệ thống loại bỏ hoàn toàn chi phí đắt đỏ của NAT Gateway.  
+  - Tiến trình ETL được xử lý bởi các dịch vụ serverless linh hoạt và tiết kiệm (Lambda + EventBridge).  
+  - S3 cung cấp giải pháp lưu trữ dữ liệu thô với độ bền cao và chi phí thấp.  
+
 - **Dễ mở rộng**:
-  - Thiết kế hiện tại là batch-based, nhưng có thể mở rộng sang real-time, analytics phức tạp hơn hoặc chuyển sang các công nghệ DW khác.
+  - Dù đang áp dụng mô hình batch-based, nền tảng này hoàn toàn có thể được nâng cấp để xử lý luồng sự kiện real-time, áp dụng phân tích ML nâng cao, hoặc dịch chuyển sang các hệ thống DW quy mô lớn hơn.
 
 ---
 
 ## 5.6.3 Dọn dẹp Resource
 
 1. **Amplify & CloudFront**
-   - Xóa Amplify app (`ClickSteam.NextJS`).  
-   - Thao tác này cũng xóa CloudFront distribution.
+   - Xóa bỏ ứng dụng Amplify (`ClickSteam.NextJS`).  
+   - Thao tác này sẽ tự động dọn dẹp CloudFront distribution liên kết.
 
 2. **API Gateway & Lambda**
-   - Xóa `clickstream-http-api`.  
-   - Xóa các Lambda:
+   - Loại bỏ API Gateway `clickstream-http-api`.  
+   - Tiến hành xóa các hàm Lambda sau:
      - `clickstream-lambda-ingest`  
      - `SBW_Lamda_ETL`  
 
 3. **EventBridge**
-   - Xóa rule `SBW_ETL_HOURLY_RULE`.  
+   - Xóa bỏ rule đặt lịch `SBW_ETL_HOURLY_RULE`.  
 
 4. **S3 Buckets**
-   - Làm rỗng (empty) rồi xóa:
-     - `clickstream-s3-ingest` (RAW clickstream)  
-     - `clickstream-s3-sbw` (assets) nếu không dùng cho dự án khác  
+   - Xóa sạch dữ liệu (empty) bên trong, sau đó tiến hành xóa bucket:
+     - `clickstream-s3-ingest` (nơi chứa RAW clickstream)  
+     - `clickstream-s3-sbw` (nơi chứa assets), với điều kiện bucket này không còn phục vụ cho dự án nào khác  
 
 5. **EC2 Instances**
-   - Stop hoặc terminate:
+   - Dừng lại hoặc terminate vĩnh viễn:
      - `SBW_EC2_WebDB`  
      - `SBW_EC2_ShinyDWH`  
-   - Release Elastic IP (nếu có gán).
+   - Trả lại (release) các Elastic IP nếu chúng từng được gắn vào các instance này.
 
 6. **VPC & Networking**
-   - Xóa VPC endpoints (S3 Gateway, SSM Interface Endpoints).  
-   - Xóa route tables, subnets, Internet Gateway.  
-   - Cuối cùng, xóa `SBW_Project_VPC` nếu không còn dùng.
-
+   - Xóa bỏ mọi VPC endpoints (bao gồm S3 Gateway và các SSM Interface Endpoints).  
+   - Tiếp tục xóa các route tables, subnets, và Internet Gateway.  
+   - Sau khi VPC đã trống rỗng, thực hiện xóa `SBW_Project_VPC`.

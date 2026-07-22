@@ -34,7 +34,7 @@ pre: " <b> 5.4. </b> "
 
 - Enables **private network access to S3** for:
   - `SBW_Lamda_ETL`   
-- No NAT Gateway is required.
+- Eliminates the need for a NAT Gateway.
 
 ### SSM Interface Endpoints
 
@@ -42,7 +42,7 @@ pre: " <b> 5.4. </b> "
 - `com.amazonaws.ap-southeast-1.ssmmessages`  
 - `com.amazonaws.ap-southeast-1.ec2messages`  
 
-These endpoints allow **Session Manager** to manage and port-forward to `SBW_EC2_ShinyDWH` without needing a public IP address or SSH port.
+These endpoints allow **Session Manager** to administer and port-forward to `SBW_EC2_ShinyDWH` without requiring a public IP address or an open SSH port.
 
 ---
 
@@ -74,14 +74,14 @@ context_product_url_path
 
 The instance allows:
 
-- `SBW_Lamda_ETL` to connect to the PostgreSQL DB `clickstream_dw`.  
-- Local web access to Shiny via SSM.
+- `SBW_Lamda_ETL` to connect to the PostgreSQL database `clickstream_dw`.  
+- Local web access to Shiny via SSM port forwarding.
 
 ---
 
 ## 5.4.4 ETL Lambda – `SBW_Lamda_ETL` (running in the Private subnet)
 
-The ETL Lambda is where the main batch processing happens.
+The ETL Lambda is where the core batch processing logic runs.
 
 **VPC configuration:**
 
@@ -96,7 +96,7 @@ The ETL Lambda is where the main batch processing happens.
 
 **Responsibilities:**
 
-1. Determine the list of files in `s3://clickstream-s3-ingest/events/YYYY/MM/DD/` for the batch to be processed.  
+1. Determine the set of files in `s3://clickstream-s3-ingest/events/YYYY/MM/DD/` for the current batch to process.  
 2. For each JSON file:  
    - Extract  
    - Transform  
@@ -104,7 +104,7 @@ The ETL Lambda is where the main batch processing happens.
 
 **IAM role:**
 
-- Grants permissions for the Lambda to access the EC2_ShinyDWH (for example, via the database endpoint in the private subnet).
+- Grants the Lambda the permissions needed to reach `EC2_ShinyDWH` (e.g., via the database endpoint in the private subnet).
 
 ---
 
@@ -112,16 +112,16 @@ The ETL Lambda is where the main batch processing happens.
 
 ![EventBridge rule](/images/aws-eventbridge-sbw-etl-hourly-rule.png)
 
-EventBridge helps the platform operate in a **batch** style:
+EventBridge keeps the platform operating in a **batch** cadence:
 
 - **Rule name**: `SBW_ETL_HOURLY_RULE`  
 - **Schedule**: `rate(1 hour)`  
 - **Target**: `SBW_Lamda_ETL`  
 
-Each time the rule runs:
+Each time the rule fires:
 
-1. The ETL Lambda runs inside the private subnet.  
-2. It reads new events from S3 via the Gateway Endpoint.  
+1. The ETL Lambda starts up inside the private subnet.  
+2. It reads new events from S3 through the Gateway Endpoint.  
 3. It loads the processed data into `clickstream_dw`.  
 
 You can also **trigger the ETL Lambda manually** (from the Lambda console) for backfill or testing purposes.
@@ -135,4 +135,4 @@ You can also **trigger the ETL Lambda manually** (from the Lambda console) for b
 
 - `sg_analytics_ShinyDWH`:
   - Inbound `5432/tcp` from `sg_Lambda_ETL`.  
-  - Inbound `3838/tcp` for Shiny (used only via SSM port forwarding).  
+  - Inbound `3838/tcp` for Shiny (accessed only via SSM port forwarding).  

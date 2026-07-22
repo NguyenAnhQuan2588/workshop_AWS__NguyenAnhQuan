@@ -95,10 +95,3 @@ pre: " <b> 1.2. </b> "
   - Create Security groups
 
 Create Security groups
-![anh](/images/a1.png)
-![anh](/images/a2.png)
-![anh](/images/a3.png)
-![anh](/images/a4.png)
-![anh](/images/a5.png)
-![anh](/images/a6.png)
-![anh](/images/a7.png)

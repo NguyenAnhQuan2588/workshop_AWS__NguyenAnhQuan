@@ -5,24 +5,12 @@ chapter: false
 pre: " <b> 1.9. </b> "
 ---
 
-### Week 9 Objective: Build the system architecture
+### Week 9 Objective
 
 #### Work activities
 
-- Studied AWS services in detail for building a real-time pipeline:
-
-  - Kinesis Stream / Firehose (streaming ingest)
-  - AWS Lambda (real-time processing)
-  - S3 (storage)
-  - Glue / EMR (ETL & analytics)
-  - Athena / QuickSight (reporting)
-
-- Each member proposed an architecture design: streaming vs batch, session processing steps, data schema.
-- Discussed end-to-end MLOps solutions for processing and automation.
-
-#### Results
-
-- Identified the overall architecture that fits the requirements: ingest → transform → sessionization → storage → analysis.
-- The team agreed to choose a streaming-first architecture model.
-
+- Wrote a harvest report about the event.
+- Translated AWS blogs.
+- Self-studied at home.
+- Held an offline team meeting.
 

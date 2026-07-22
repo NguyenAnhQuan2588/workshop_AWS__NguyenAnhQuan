@@ -13,19 +13,19 @@ pre: "<b>5. </b>"
 
 #### Tổng quan
 
-Workshop này triển khai một **nền tảng phân tích Clickstream theo kiểu batch (Batch-Based Clickstream Analytics Platform)** cho một website thương mại điện tử bán sản phẩm máy tính.
+Workshop này hướng dẫn từng bước triển khai một **nền tảng phân tích Clickstream theo kiểu batch (Batch-Based Clickstream Analytics Platform)** dành cho website thương mại điện tử bán sản phẩm máy tính.
 
-Hệ thống thu thập các sự kiện (events) clickstream từ frontend, lưu dữ liệu JSON thô trong **Amazon S3**, xử lý events theo lịch ETL định kỳ (**AWS Lambda + EventBridge**), và nạp dữ liệu phân tích vào một **PostgreSQL Data Warehouse trên EC2** nằm trong private subnet.
+Hệ thống thu thập các sự kiện clickstream phát sinh từ frontend, lưu trữ JSON thô trong **Amazon S3**, thực thi ETL định kỳ (**AWS Lambda + EventBridge**), rồi tải dữ liệu đã chuyển đổi vào **PostgreSQL Data Warehouse trên EC2** đặt trong private subnet.
 
-Các dashboard phân tích được xây dựng bằng **R Shiny**, chạy trên cùng EC2 với Data Warehouse, và được truy cập thông qua **AWS Systems Manager Session Manager**.
+Dashboard phân tích được vận hành bởi **R Shiny**, triển khai trên cùng EC2 với Data Warehouse, và truy cập an toàn qua **AWS Systems Manager Session Manager**.
 
-Nền tảng được thiết kế với các tiêu chí:
+Nền tảng được thiết kế theo các nguyên tắc:
 
-- Tách biệt rõ ràng giữa workload **OLTP và Analytics**
-- Backend analytics chỉ chạy trong private subnet (**không có truy cập public vào DW**)
-- Sử dụng các thành phần serverless của AWS để tối ưu chi phí và khả năng mở rộng
-- Quản trị qua **SSM Session Manager** vào EC2 chạy DW / Shiny
-- Có thể chạy web Shiny bằng **localhost:3838**
+- Ranh giới rõ ràng giữa workload **OLTP và Analytics**
+- Backend analytics hoàn toàn chạy trong private (**không có truy cập public vào DW**)
+- Các thành phần serverless của AWS để tối đa hóa hiệu quả chi phí và khả năng mở rộng
+- Không SSH trực tiếp: toàn bộ quản trị thực hiện qua **SSM Session Manager** vào EC2 chạy DW / Shiny
+- Shiny app có thể truy cập từ máy local tại **localhost:3838**
 
 #### Các thành phần kiến trúc chính
 
