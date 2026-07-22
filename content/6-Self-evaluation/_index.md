@@ -5,7 +5,7 @@ chapter: false
 pre: " <b> 6. </b> "
 ---
 
-During my internship at **AWS First Cloud Journey** from **08/09/2025** to **09/12/2025**, I had the opportunity to experience a real working environment and apply the knowledge I learned in school to everyday tasks.
+During my internship at **AWS First Cloud Journey** from **04/05/2026** to **30/07/2026**, I had the opportunity to experience a real working environment and apply the knowledge I learned in school to everyday tasks.
 
 I had the opportunity to work in a dynamic environment, where my team and I studied and carried out a group project together. I also had the chance to learn and access AWS, explore various cloud platform services, practice and work directly with the cloud, and understand the importance of these services. Through this experience, I gained a deeper understanding of workflow processes and improved my skills in areas such as analysis, programming, reporting, and using basic cloud services.
 
